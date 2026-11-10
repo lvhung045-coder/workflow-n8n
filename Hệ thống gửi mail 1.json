@@ -1,0 +1,254 @@
+{
+  "name": "Hệ thống gửi mail 1",
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1emFJqzlOuoEmfjAlU2zwnqORTxAOh45PYwYdsPetrlI",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1822075907,
+          "mode": "list",
+          "cachedResultName": "Câu trả lời biểu mẫu 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1emFJqzlOuoEmfjAlU2zwnqORTxAOh45PYwYdsPetrlI/edit#gid=1822075907"
+        },
+        "options": {}
+      },
+      "id": "bab8fd7f-7643-4b39-80e3-8609bad4eeb1",
+      "name": "Đọc các dòng trong sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -224,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "8JScqabDhwHxQPZ0",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ String($json[\"Trạng thái\"] ?? \"\") }}",
+              "rightValue": "={{ String($json[\"Dấu thời gian\"] ?? \"\") }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.Email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e4213ac7-2b41-4bef-a599-795bdd2530d8",
+      "name": "Lọc dòng chưa gửi",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.Email }}",
+        "subject": "Cảm ơn bạn đã đăng ký",
+        "message": "=Cảm ơn {{ $json['Tên'] }} đã đến với chúng tôi!",
+        "options": {}
+      },
+      "id": "4f6b9313-d849-4b3f-8791-8bd4de4acad6",
+      "name": "Send a message",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        0
+      ],
+      "webhookId": "a19cc49f-08cc-4bfe-a6df-6fa37ec7c334",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "kxKAgDakqsQb10p7",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1emFJqzlOuoEmfjAlU2zwnqORTxAOh45PYwYdsPetrlI",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1822075907,
+          "mode": "list",
+          "cachedResultName": "Câu trả lời biểu mẫu 1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1emFJqzlOuoEmfjAlU2zwnqORTxAOh45PYwYdsPetrlI/edit#gid=1822075907"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $(\"Lọc dòng chưa gửi\").item.json.row_number }}",
+            "Trạng thái": "={{ $(\"Lọc dòng chưa gửi\").item.json[\"Dấu thời gian\"] }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            },
+            {
+              "id": "Trạng thái",
+              "displayName": "Trạng thái",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ]
+        },
+        "options": {
+          "cellFormat": "RAW"
+        }
+      },
+      "id": "bce2bd3a-73bc-4911-9077-795ccc550c3a",
+      "name": "Đánh dấu đã gửi",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        448,
+        0
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "8JScqabDhwHxQPZ0",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds"
+            }
+          ]
+        }
+      },
+      "id": "7064c7fe-3b7a-4c79-865a-45d4888ce6ec",
+      "name": "Mỗi 1 phút",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -448,
+        0
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Đọc các dòng trong sheet": {
+      "main": [
+        [
+          {
+            "node": "Lọc dòng chưa gửi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lọc dòng chưa gửi": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Đánh dấu đã gửi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mỗi 1 phút": {
+      "main": [
+        [
+          {
+            "node": "Đọc các dòng trong sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Ho_Chi_Minh",
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "6ab448ca-ec3d-40e5-87f5-33f732c2333a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "913052c0bdfcbe95c1b495a863bbf3a34c5b9d41257b258cccd61052a3936feb"
+  },
+  "nodeGroups": [],
+  "id": "x3k85jVv5Nk2fcEC",
+  "tags": []
+}
