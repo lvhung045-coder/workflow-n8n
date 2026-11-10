@@ -1,0 +1,390 @@
+{
+  "name": "workflow AI agent",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "seconds"
+            }
+          ]
+        }
+      },
+      "id": "4f893b65-ad57-463f-b328-0fe5138272e9",
+      "name": "Mỗi 2 phút",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1emFJqzlOuoEmfjAlU2zwnqORTxAOh45PYwYdsPetrlI"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 1822075907,
+          "cachedResultName": "Câu trả lời biểu mẫu 1"
+        },
+        "options": {}
+      },
+      "id": "27e5390f-62a2-48f4-bded-5fb3d8182889",
+      "name": "Đọc phản hồi từ sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        224,
+        112
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "8JScqabDhwHxQPZ0",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ String($json[\"Trạng thái\"] ?? \"\") }}",
+              "rightValue": "={{ String($json[\"Dấu thời gian\"] ?? \"\") }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "c2",
+              "leftValue": "={{ $json.Email }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "7aa2a39f-2293-4f68-8455-a507e25f9ff6",
+      "name": "Lọc dòng chưa xử lý",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        448,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Khách hàng: {{ $json[\"Tên\"] }}\nĐịa chỉ: {{ $json[\"Địa chỉ\"] }}\nSố điện thoại: {{ $json[\"Số điện thoại\"] }}\nNội dung/ý kiến khách để lại: {{ $json[\"Ghi chú\"] || \"(không có ghi chú)\" }}",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Bạn là nhân viên chăm sóc khách hàng. Đọc nội dung biểu mẫu khách gửi, rồi: (1) đánh giá cảm xúc (Tích cực / Trung lập / Tiêu cực); (2) gắn một nhãn (Khen ngợi / Góp ý / Khiếu nại / Hỏi thông tin / Khác); (3) viết tiêu đề email ngắn; (4) viết email phản hồi bằng tiếng Việt, lịch sự, ấm áp, gọi khách là \"bạn\" kèm tên (không đoán giới tính, không dùng anh/chị), 3-5 câu, phù hợp cảm xúc và nội dung (xin lỗi nếu khiếu nại, cảm ơn nếu khen, giải đáp hoặc hẹn liên hệ lại nếu hỏi). Nếu khách không để ghi chú, chỉ cảm ơn đã đăng ký. Không bịa thông tin về giá, chính sách hay cam kết cụ thể. Ký tên: Đội ngũ chăm sóc khách hàng."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "id": "49ff2065-7cd9-4b2f-b968-6e9e65874abf",
+      "name": "AI phân tích và soạn phản hồi",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        672,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5.4-mini",
+          "cachedResultName": "gpt-5.4-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "5e7fd637-68ba-46cd-b9bb-7d774c4e404f",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        592,
+        336
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "Gateway credits",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\"type\":\"object\",\"properties\":{\"sentiment\":{\"type\":\"string\",\"enum\":[\"Tích cực\",\"Trung lập\",\"Tiêu cực\"]},\"label\":{\"type\":\"string\",\"enum\":[\"Khen ngợi\",\"Góp ý\",\"Khiếu nại\",\"Hỏi thông tin\",\"Khác\"]},\"subject\":{\"type\":\"string\"},\"reply\":{\"type\":\"string\"}},\"required\":[\"sentiment\",\"label\",\"subject\",\"reply\"]}"
+      },
+      "id": "07dbc25e-50cd-4cc0-8813-431500d58d16",
+      "name": "Định dạng kết quả AI",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        880,
+        336
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $(\"Lọc dòng chưa xử lý\").item.json.Email }}",
+        "subject": "={{ $json.output.subject }}",
+        "message": "={{ $json.output.reply }}",
+        "options": {}
+      },
+      "id": "3aec5d0d-f34c-4e67-b109-a08dfa6e216c",
+      "name": "Gửi email phản hồi",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1024,
+        112
+      ],
+      "webhookId": "f57a82c2-1d2e-4355-b703-80eae9e25291",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "kxKAgDakqsQb10p7",
+          "name": "Gmail account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "row_number",
+              "value": "={{ $(\"Lọc dòng chưa xử lý\").item.json.row_number }}",
+              "type": "number"
+            },
+            {
+              "id": "a2",
+              "name": "Trạng thái",
+              "value": "={{ $(\"Lọc dòng chưa xử lý\").item.json[\"Dấu thời gian\"] }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "Cảm xúc",
+              "value": "={{ $(\"AI phân tích và soạn phản hồi\").item.json.output.sentiment }}",
+              "type": "string"
+            },
+            {
+              "id": "a4",
+              "name": "Nhãn",
+              "value": "={{ $(\"AI phân tích và soạn phản hồi\").item.json.output.label }}",
+              "type": "string"
+            },
+            {
+              "id": "a5",
+              "name": "Phản hồi AI",
+              "value": "={{ $(\"AI phân tích và soạn phản hồi\").item.json.output.reply }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "67c346f6-fc55-4676-8fea-81c8a14e688a",
+      "name": "Chuẩn bị ghi vào sheet",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1248,
+        112
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "1emFJqzlOuoEmfjAlU2zwnqORTxAOh45PYwYdsPetrlI"
+        },
+        "sheetName": {
+          "__rl": true,
+          "mode": "list",
+          "value": 1822075907,
+          "cachedResultName": "Câu trả lời biểu mẫu 1"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ]
+        },
+        "options": {
+          "cellFormat": "RAW",
+          "handlingExtraData": "insertInNewColumn"
+        }
+      },
+      "id": "c764b44f-5349-4c47-b7c5-05d296bc4d79",
+      "name": "Ghi nhãn và đánh dấu đã gửi",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1472,
+        112
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "8JScqabDhwHxQPZ0",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Mỗi 2 phút": {
+      "main": [
+        [
+          {
+            "node": "Đọc phản hồi từ sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Đọc phản hồi từ sheet": {
+      "main": [
+        [
+          {
+            "node": "Lọc dòng chưa xử lý",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lọc dòng chưa xử lý": {
+      "main": [
+        [
+          {
+            "node": "AI phân tích và soạn phản hồi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI phân tích và soạn phản hồi": {
+      "main": [
+        [
+          {
+            "node": "Gửi email phản hồi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI phân tích và soạn phản hồi",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Định dạng kết quả AI": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI phân tích và soạn phản hồi",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gửi email phản hồi": {
+      "main": [
+        [
+          {
+            "node": "Chuẩn bị ghi vào sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chuẩn bị ghi vào sheet": {
+      "main": [
+        [
+          {
+            "node": "Ghi nhãn và đánh dấu đã gửi",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timezone": "Asia/Ho_Chi_Minh"
+  },
+  "versionId": "bcdbf874-9c6d-494f-a38f-6880d043e82b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "913052c0bdfcbe95c1b495a863bbf3a34c5b9d41257b258cccd61052a3936feb"
+  },
+  "nodeGroups": [],
+  "id": "hYTe7ca82sRC2YhK",
+  "tags": []
+}
