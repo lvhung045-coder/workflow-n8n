@@ -23,7 +23,7 @@ Quy trình tự động hóa đọc phản hồi khách hàng từ Google Sheets
 
 Quy trình gồm 7 bước chính được xử lý tự động theo chu kỳ:
 
-1. **Mỗi 2 phút (Schedule Trigger):** Lập lịch tự động kích hoạt workflow sau mỗi 2 phút.
+1. **Mỗi 30 giây (Schedule Trigger):** Lập lịch tự động kích hoạt workflow sau mỗi 30 giây.
 2. **Đọc phản hồi từ sheet (Google Sheets - Read):** Đọc các hàng dữ liệu phản hồi mới từ khách hàng.
 3. **Lọc dòng chưa xử lý (Filter):** Lọc bỏ các dòng đã gửi để tránh xử lý hoặc gửi mail trùng lặp.
 4. **AI phân tích và soạn phản hồi (LangChain Chain + OpenAI Chat Model + Structured Output Parser):**
